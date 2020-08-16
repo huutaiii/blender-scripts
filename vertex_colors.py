@@ -5,12 +5,11 @@ from mathutils import *
 from math import *
 
 CHANNEL_INDICES = {
-    'r': 0,
-    'g': 1,
-    'b': 2,
-    'a': 3
+    'R': 0,
+    'G': 1,
+    'B': 2,
+    'A': 3
 }
-CHANNEL_NAMES = ['r', 'g', 'b', 'a']
 
 def vertex_colors_from_group(object, vertex_color, vertex_group, color_channel, blend_mode):
     data = object.data
@@ -41,7 +40,6 @@ def fill_vertex_colors(object, vertex_color, fill_color, channels, blend_mode):
                 for i in range(0, 3):
                     color[i] *= fill_color[i] if channels[i] else color[i]
             data.vertex_colors.active.data[loop_id].color = color
-    
 
 class OBJECT_OT_write_vertex_colors(bpy.types.Operator):
     bl_idname = "object.write_vertex_colors"
@@ -53,10 +51,10 @@ class OBJECT_OT_write_vertex_colors(bpy.types.Operator):
     
     channel: bpy.props.EnumProperty(
         items = [
-            ("0", "Red", ""),
-            ("1", "Green", ""),
-            ("2", "Blue", ""),
-            ("3", "Alpha", "")
+            ("R", "Red", ""),
+            ("G", "Green", ""),
+            ("B", "Blue", ""),
+            ("A", "Alpha", "")
         ],
         name = "Color channel")
     blend: bpy.props.EnumProperty(
@@ -69,7 +67,7 @@ class OBJECT_OT_write_vertex_colors(bpy.types.Operator):
     def invoke(self, context, event):
         self.src_group = context.active_object.vertex_groups.active.name
         self.dst_colors = context.active_object.data.vertex_colors.active.name
-        self.channel = "0"
+        self.channel = "R"
         self.blend = "REPLACE"
         return context.window_manager.invoke_props_dialog(self)
     
@@ -86,7 +84,7 @@ class OBJECT_OT_write_vertex_colors(bpy.types.Operator):
             object,
             object.data.vertex_colors[self.dst_colors],
             object.vertex_groups[self.src_group],
-            int(self.channel), self.blend
+            CHANNEL_INDICES[self.channel], self.blend
         )
         return {"FINISHED"}
 
@@ -159,11 +157,11 @@ classes = [
 
 def register():
     for cls in classes:
-     bpy.utils.register_class(cls)
+        bpy.utils.register_class(cls)
 
 def unregister():
     for cls in classes:
-     bpy.utils.register_class(cls)
+        bpy.utils.register_class(cls)
 
 if __name__ == "__main__":
     register()

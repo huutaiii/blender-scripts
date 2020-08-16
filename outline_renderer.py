@@ -121,7 +121,5 @@ def unregister():
 
 if __name__ == "__main__":
     register()
-    
-    # can't be removed later, cause python.
     bpy.app.handlers.depsgraph_update_post.append(draw_mesh)
     bpy.app.handlers.frame_change_post.append(draw_mesh)
