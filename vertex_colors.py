@@ -141,7 +141,7 @@ class OBJECT_PT_vertex_colors(bpy.types.Panel):
     
     @classmethod
     def poll(self, context):
-        return context.active_object.type == "MESH"
+        return not isinstance(context.active_object, type(None)) and context.active_object.type == "MESH"
 
     def draw(self, context):
         layout = self.layout
