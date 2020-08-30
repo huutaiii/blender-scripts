@@ -38,7 +38,7 @@ def fill_vertex_colors(object, vertex_color, fill_color, channels, blend_mode):
 					color[i] = fill_color[i] if channels[i] else color[i]
 			elif blend_mode == "MULTIPLY":
 				for i in range(0, 3):
-					color[i] *= fill_color[i] if channels[i] else color[i]
+					color[i] *= fill_color[i] if channels[i] else 1
 			data.vertex_colors.active.data[loop_id].color = color
 
 class OBJECT_OT_write_vertex_colors(bpy.types.Operator):
@@ -161,7 +161,7 @@ def register():
 
 def unregister():
 	for cls in classes:
-		bpy.utils.register_class(cls)
+		bpy.utils.unregister_class(cls)
 
 if __name__ == "__main__":
 	register()
