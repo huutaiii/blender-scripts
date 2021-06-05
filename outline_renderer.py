@@ -13,16 +13,20 @@ uniform mat4 matrix_world;
 uniform float outline_width;
 in vec3 position;
 in vec3 vertex_normal;
+in vec4 vertex_color;
+varying vec4 vcolor;
 
 void main()
 {
-    vec3 vertex = (matrix_world * vec4(position, 1)).xyz + vertex_normal * 0.1 * outline_width;
+    vec3 vertex = (matrix_world * vec4(position, 1)).xyz + vertex_normal * vertex_color.xyz * 0.1 * outline_width;
     gl_Position = perspective_matrix * vec4(vertex, 1);
+    vcolor = vertex_color;
 }
 """
 
 pixel_shader = """
 uniform vec4 color;
+varying vec4 vcolor;
 
 void main()
 {
@@ -61,12 +65,15 @@ def draw_mesh(scene):
         mesh = bpy.context.active_object.data
 #    mesh = bpy.context.active_object.data
     mesh.calc_loop_triangles()
-    mesh.calc_tangents()
+    mesh.calc_normals_split()
+    
+    print(mesh.vertex_colors.items())
 
 #    vertices = np.empty((len(mesh.vertices), 3), 'f')
     indices = np.empty((len(mesh.loop_triangles), 3), dtype=np.int)
     positions = np.empty((len(mesh.loops), 3), dtype=np.float32)
     normals = np.empty((len(mesh.loops), 3), dtype=np.float32)
+    vertex_colors = np.ones((len(mesh.loops), 4), dtype=np.float32)
     
 #    print(len(mesh.vertices))
 #    print(len(mesh.loop_triangles))
@@ -82,14 +89,20 @@ def draw_mesh(scene):
         loop = mesh.loops[i]
         positions[i] = mesh.vertices[loop.vertex_index].co
         normals[i] = loop.normal
+        try:
+            vertex_colors[i] = mesh.vertex_colors[bpy.context.object.data.custom_outline_vertex_offsets].data[i].color
+        except KeyError:
+            pass
 
     shader = gpu.types.GPUShader(vertex_shader, pixel_shader)
     fmt = gpu.types.GPUVertFormat()
     fmt.attr_add(id="position", comp_type="F32", len=3, fetch_mode="FLOAT")
     fmt.attr_add(id="vertex_normal", comp_type="F32", len=3, fetch_mode="FLOAT")
+    fmt.attr_add(id="vertex_color", comp_type="F32", len=4, fetch_mode="FLOAT")
     vbo = gpu.types.GPUVertBuf(len=len(mesh.loops), format=fmt)
     vbo.attr_fill(id="position", data=positions)
     vbo.attr_fill(id="vertex_normal", data=normals)
+    vbo.attr_fill(id="vertex_color", data=vertex_colors)
     ibo = gpu.types.GPUIndexBuf(type="TRIS", seq=indices)
     batch = gpu.types.GPUBatch(type="TRIS", buf=vbo, elem=ibo)
 
@@ -117,7 +130,7 @@ class OBJECT_PT_outline_rendering(bpy.types.Panel):
     bl_idname = "OBJECT_PT_outline_rendering"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
-    bl_category = "Shaders"
+    bl_category = "GL"
 
     def draw(self, context):
         layout = self.layout
@@ -126,6 +139,7 @@ class OBJECT_PT_outline_rendering(bpy.types.Panel):
         layout.prop(scene, "custom_outline_width")
         layout.prop(scene, "custom_outline_color")
         layout.prop(scene, "custom_outline_apply_modifiers")
+        layout.prop_search(context.object.data, "custom_outline_vertex_offsets", context.object.data, "vertex_colors")
 
 def register():
     bpy.utils.register_class(OBJECT_PT_outline_rendering)
@@ -145,6 +159,7 @@ def register():
             min = 0,
             max = 1
         )
+    bpy.types.Mesh.custom_outline_vertex_offsets = bpy.props.StringProperty(name = "Vertex Offsets")
     bpy.app.handlers.depsgraph_update_post.append(draw_mesh)
     bpy.app.handlers.frame_change_post.append(draw_mesh)
 
