@@ -63,25 +63,16 @@ def draw_mesh(scene):
         mesh = get_modified_mesh(bpy.context.active_object) 
     else:
         mesh = bpy.context.active_object.data
-#    mesh = bpy.context.active_object.data
     mesh.calc_loop_triangles()
     mesh.calc_normals_split()
     
     print(mesh.vertex_colors.items())
 
-#    vertices = np.empty((len(mesh.vertices), 3), 'f')
     indices = np.empty((len(mesh.loop_triangles), 3), dtype=np.int)
     positions = np.empty((len(mesh.loops), 3), dtype=np.float32)
     normals = np.empty((len(mesh.loops), 3), dtype=np.float32)
     vertex_colors = np.ones((len(mesh.loops), 4), dtype=np.float32)
     
-#    print(len(mesh.vertices))
-#    print(len(mesh.loop_triangles))
-
-#   mesh.vertices.foreach_get(
-#       "co", np.reshape(vertices, len(mesh.vertices) * 3))
-#   mesh.vertices.foreach_get(
-#       "normal", np.reshape(normals, len(mesh.vertices) * 3))
     mesh.loop_triangles.foreach_get(
         "loops", np.reshape(indices, len(mesh.loop_triangles) * 3))
         
@@ -165,7 +156,6 @@ def register():
 
 def unregister():
     bpy.utils.unregister_class(OBJECT_PT_outline_rendering)
-#    del bpy.types.Scene.use_custom_shaders
     bpy.app.handlers.depsgraph_update_post.remove(draw_mesh)
     bpy.app.handlers.frame_change_post.remove(draw_mesh)
     
