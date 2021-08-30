@@ -4,6 +4,14 @@ import bpy
 from mathutils import *
 from math import *
 
+bl_info = {
+	"name": "Vertex Color Operators",
+	"author": "huutai",
+	"category": "Mesh",
+	"version": (0, 1),
+	"blender": (2, 80)
+}
+
 CHANNEL_INDICES = {
 	'R': 0,
 	'G': 1,
